@@ -1,0 +1,133 @@
+@import './styles/variables.less';
+@import './styles/mixins.less';
+
+.app {
+    max-width: @container-max-width;
+    margin: 0 auto;
+    padding: @spacing-lg;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    h1 {
+        text-align: center;
+        color: @text-color;
+        margin-bottom: @spacing-xl;
+    }
+
+    // 统计信息区域
+    .stats {
+        .flex-between();
+        background: @bg-light;
+        padding: @spacing-md;
+        border-radius: @border-radius-large;
+        margin-bottom: @spacing-lg;
+
+        span {
+            font-weight: bold;
+            color: @text-light;
+        }
+
+        .mobile({
+            flex-direction: column;
+            gap: @spacing-sm;
+            text-align: center;
+        });
+}
+
+// 添加待办事项区域
+.add-todo {
+    display: flex;
+    gap: @spacing-sm;
+    margin-bottom: @spacing-lg;
+
+    .todo-input {
+        .input-base();
+        flex: 1;
+    }
+
+    .add-btn {
+        .button-primary();
+    }
+
+    .mobile({
+        flex-direction: column;
+    });
+}
+
+// API 操作区域
+.api-actions {
+    margin-bottom: @spacing-lg;
+    text-align: center;
+
+    .fetch-btn {
+        .button-secondary();
+
+        &:disabled {
+            .button-disabled();
+        }
+    }
+
+    .error {
+        color: @error-color;
+        margin-top: @spacing-sm;
+        font-weight: bold;
+    }
+}
+
+// 待办事项列表
+.todo-list {
+    .flex-column();
+    gap: @spacing-sm;
+
+    .empty-message {
+        text-align: center;
+        color: @text-muted;
+        font-style: italic;
+        margin: @spacing-xxl 0;
+    }
+
+    // 单个待办事项
+    .todo-item {
+        .card();
+        display: flex;
+        align-items: center;
+        padding: @spacing-md;
+
+        .todo-checkbox {
+            margin-right: @spacing-md;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .todo-title {
+            flex: 1;
+            font-size: @font-size-base;
+            cursor: pointer;
+            transition: color 0.3s;
+
+            &.completed {
+                .text-completed();
+            }
+        }
+
+        .delete-btn {
+            .button-danger();
+        }
+
+        // 移动端样式
+        .mobile({
+            flex-direction: column;
+            align-items: flex-start;
+            gap: @spacing-sm;
+
+            .todo-title {
+                order: -1;
+                width: 100%;
+            }
+
+            .delete-btn {
+                align-self: flex-end;
+            }
+        });
+}
+}
+}

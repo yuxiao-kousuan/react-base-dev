@@ -1,0 +1,81 @@
+@import './variables.less';
+
+// 暗色主题变量
+.dark-theme {
+    @text-color: #ffffff;
+    @text-light: #cccccc;
+    @text-muted: #999999;
+    @bg-light: #2a2a2a;
+    @bg-white: #1a1a1a;
+    @border-color: #404040;
+    @gradient-bg: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+
+    // 应用暗色主题样式
+    &.app {
+        background: @gradient-bg;
+        color: @text-color;
+
+        .stats {
+            background: @bg-light;
+            color: @text-light;
+        }
+
+        .todo-item {
+            background: @bg-white;
+            border-color: @border-color;
+            color: @text-color;
+
+            .todo-title.completed {
+                color: @text-muted;
+            }
+        }
+
+        .todo-input {
+            background: @bg-white;
+            border-color: @border-color;
+            color: @text-color;
+
+            &::placeholder {
+                color: @text-muted;
+            }
+        }
+    }
+}
+
+// 高对比度主题
+.high-contrast-theme {
+    @primary-color: #0066cc;
+    @danger-color: #cc0000;
+    @text-color: #000000;
+    @bg-white: #ffffff;
+    @border-color: #000000;
+
+    &.app {
+        .add-btn {
+            background: @primary-color;
+            border: 2px solid @text-color;
+        }
+
+        .delete-btn {
+            background: @danger-color;
+            border: 2px solid @text-color;
+        }
+
+        .todo-item {
+            border: 2px solid @border-color;
+        }
+
+        .todo-input {
+            border: 2px solid @border-color;
+        }
+    }
+}
+
+// 主题切换动画
+.theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+
+    * {
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+}

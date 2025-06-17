@@ -1,0 +1,119 @@
+@import './variables.less';
+
+// 按钮混合
+.button-base() {
+    padding: 12px 20px;
+    border: none;
+    border-radius: @border-radius;
+    cursor: pointer;
+    font-size: @font-size-base;
+    font-family: inherit;
+    transition: @transition;
+
+    &:focus,
+    &:focus-visible {
+        outline: 4px auto -webkit-focus-ring-color;
+    }
+}
+
+.button-primary() {
+    .button-base();
+    background: @primary-color;
+    color: @bg-white;
+
+    &:hover:not(:disabled) {
+        background: @primary-hover;
+    }
+}
+
+.button-secondary() {
+    .button-base();
+    background: @secondary-color;
+    color: @bg-white;
+
+    &:hover:not(:disabled) {
+        background: @secondary-hover;
+    }
+}
+
+.button-danger() {
+    .button-base();
+    background: @danger-color;
+    color: @bg-white;
+    padding: 6px 12px;
+    font-size: @font-size-sm;
+    border-radius: 4px;
+
+    &:hover {
+        background: @danger-hover;
+    }
+}
+
+.button-disabled() {
+    background: #ccc !important;
+    cursor: not-allowed !important;
+}
+
+// 输入框混合
+.input-base() {
+    padding: 12px;
+    border: 2px solid @border-color;
+    border-radius: @border-radius;
+    font-size: @font-size-base;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.3s;
+
+    &:focus {
+        border-color: @primary-color;
+    }
+}
+
+// 卡片混合
+.card() {
+    background: @bg-white;
+    border: 1px solid @border-color;
+    border-radius: @border-radius;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+        box-shadow: @box-shadow;
+    }
+}
+
+// Flex 布局混合
+.flex-center() {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between() {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flex-column() {
+    display: flex;
+    flex-direction: column;
+}
+
+// 响应式混合
+.mobile(@rules) {
+    @media (max-width: @mobile-breakpoint) {
+        @rules();
+    }
+}
+
+// 文本样式混合
+.text-truncate() {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.text-completed() {
+    text-decoration: line-through;
+    color: @text-muted;
+}
