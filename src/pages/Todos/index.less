@@ -1,0 +1,269 @@
+.todos-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2.5rem;
+    }
+
+    .todos-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 24px;
+
+        .add-todo-section,
+        .actions-section,
+        .todo-list-section,
+        .stats-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e1e5e9;
+
+            h2 {
+                color: #2c3e50;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e74c3c;
+                font-size: 1.5rem;
+            }
+        }
+
+        .add-todo-section {
+            .add-todo-form {
+                display: flex;
+                gap: 12px;
+
+                .todo-input {
+                    flex: 1;
+                    padding: 14px 16px;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    transition: all 0.3s;
+
+                    &:focus {
+                        outline: none;
+                        border-color: #007bff;
+                        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+                    }
+
+                    &::placeholder {
+                        color: #999;
+                    }
+                }
+
+                .add-btn {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 14px 24px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    font-size: 16px;
+                    transition: all 0.3s;
+                    white-space: nowrap;
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+                    }
+                }
+            }
+        }
+
+        .actions-section {
+            .action-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+
+                .action-btn {
+                    padding: 14px 20px;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    font-size: 16px;
+                    transition: all 0.3s;
+
+                    &:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+
+                    &.fetch-btn {
+                        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                        color: white;
+
+                        &:hover:not(:disabled) {
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4);
+                        }
+                    }
+                }
+            }
+
+            .error-message {
+                margin-top: 12px;
+                padding: 12px;
+                background: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+                border-radius: 6px;
+                font-weight: 500;
+            }
+        }
+
+        .todo-list-section {
+            grid-column: 1 / -1;
+
+            .todo-list {
+                .empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #666;
+
+                    .empty-icon {
+                        font-size: 4rem;
+                        margin-bottom: 20px;
+                    }
+
+                    p {
+                        margin: 8px 0;
+                        font-size: 1.2rem;
+                    }
+
+                    .empty-hint {
+                        color: #999;
+                        font-style: italic;
+                        font-size: 1rem;
+                    }
+                }
+
+                .todo-items {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+            }
+        }
+
+        .stats-section {
+            grid-column: 1 / -1;
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+
+                .stat-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px;
+                    border-radius: 12px;
+                    transition: all 0.3s;
+
+                    &:hover {
+                        transform: translateY(-4px);
+                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                    }
+
+                    .stat-icon {
+                        font-size: 2.5rem;
+                    }
+
+                    .stat-content {
+                        .stat-number {
+                            font-size: 2rem;
+                            font-weight: bold;
+                            margin-bottom: 4px;
+                        }
+
+                        .stat-label {
+                            font-size: 0.9rem;
+                            opacity: 0.8;
+                        }
+                    }
+
+                    &.total {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                    }
+
+                    &.completed {
+                        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+                        color: white;
+                    }
+
+                    &.pending {
+                        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                        color: white;
+                    }
+
+                    &.progress {
+                        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                        color: white;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .todos-page {
+        padding: 10px;
+
+        .todos-container {
+            grid-template-columns: 1fr;
+            gap: 16px;
+
+            .add-todo-section,
+            .actions-section,
+            .todo-list-section,
+            .stats-section {
+                padding: 16px;
+            }
+
+            .add-todo-section .add-todo-form {
+                flex-direction: column;
+
+                .add-btn {
+                    text-align: center;
+                }
+            }
+
+            .stats-section .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+
+                .stat-card {
+                    padding: 16px;
+
+                    .stat-icon {
+                        font-size: 2rem;
+                    }
+
+                    .stat-content .stat-number {
+                        font-size: 1.5rem;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .todos-page .todos-container .stats-section .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
