@@ -1,5 +1,5 @@
-import { get } from '@src/api/axiosWarpInstance';
-import asyncParallelManager from '@src/api/asyncParalleManager';
+import { get } from '@src/utils/api/axiosWarpInstance';
+import asyncParallelManager from '@src/utils/api/asyncParalleManager';
 
 const serviesName = '/apifox/mock'
 

@@ -3,8 +3,6 @@ import { observer } from 'mobx-react';
 import appStore from './store/AppStore';
 import TodoItem from './components/TodoItem';
 import { fetchUserInfo, refetchUserInfo, getCachedUserInfo } from '@src/services/mock';
-import { fullProxyDiagnosis } from '@src/test/proxyDebug';
-import { quickProxyTest } from '@src/test/quickTest';
 import './App.less';
 
 /**
@@ -94,46 +92,6 @@ const App: React.FC = observer(() => {
       setCachedUserInfo(cachedResponse.data);
     } else {
       setCachedUserInfo(undefined);
-    }
-  };
-
-  // 场景4: 快速代理测试 - 测试修复后的代理配置
-  const handleQuickTest = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const result = await quickProxyTest();
-
-      if (result.success) {
-        setUserInfo(result.data);
-        setRequestCount(prev => prev + 1);
-        setLastRequestTime(new Date().toLocaleTimeString());
-        updateCachedInfo();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '快速测试失败');
-      console.error('❌ 快速测试异常:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 场景5: 代理诊断 - 测试代理配置是否正常工作
-  const handleProxyDiagnosis = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('🔍 开始代理诊断...');
-
-      await fullProxyDiagnosis();
-
-      console.log('✅ 代理诊断完成，请查看控制台输出');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '代理诊断失败');
-      console.error('❌ 代理诊断异常:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -244,24 +202,6 @@ const App: React.FC = observer(() => {
             title="强制刷新：绕过缓存，每次都发起新请求"
           >
             🔄 强制刷新用户信息
-          </button>
-
-          <button
-            onClick={handleQuickTest}
-            disabled={loading}
-            className="quick-test-btn"
-            title="快速测试：测试修复后的代理配置"
-          >
-            ⚡ 快速代理测试
-          </button>
-
-          <button
-            onClick={handleProxyDiagnosis}
-            disabled={loading}
-            className="proxy-diagnosis-btn"
-            title="代理诊断：测试代理配置是否正常工作"
-          >
-            🔍 代理诊断
           </button>
 
           <button
