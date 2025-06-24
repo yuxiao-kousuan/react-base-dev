@@ -1,4 +1,3 @@
-/* eslint-disable no-shadow */
 import _ from 'lodash';
 
 const cloneDeep = _.cloneDeep;

@@ -13,24 +13,260 @@
         margin-bottom: @spacing-xl;
     }
 
-    // 统计信息区域
-    .stats {
-        .flex-between();
-        background: @bg-light;
-        padding: @spacing-md;
-        border-radius: @border-radius-large;
+    // 用户信息演示区域
+    .user-info-demo {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: @spacing-lg;
+        margin-bottom: @spacing-xl;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        h2 {
+            color: #495057;
+            margin-bottom: @spacing-lg;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        // 用户信息显示区域
+        .user-info-display {
+            margin-bottom: @spacing-lg;
+
+            h3 {
+                color: #495057;
+                margin-bottom: @spacing-md;
+                font-size: 1.1rem;
+            }
+
+            .user-card {
+                background: white;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: @spacing-md;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+                p {
+                    margin: 8px 0;
+
+                    strong {
+                        color: #2c3e50;
+                    }
+                }
+
+                small {
+                    color: #6c757d;
+                }
+            }
+
+            .no-data {
+                color: #6c757d;
+                font-style: italic;
+                padding: @spacing-md;
+                background: #f8f9fa;
+                border-radius: 6px;
+                text-align: center;
+            }
+        }
+
+        // 缓存信息区域
+        .cache-info {
+            margin-bottom: @spacing-lg;
+
+            h3 {
+                color: #495057;
+                margin-bottom: @spacing-md;
+                font-size: 1.1rem;
+            }
+
+            .cache-card {
+                background: #e8f5e8;
+                border: 1px solid #c3e6c3;
+                border-radius: 8px;
+                padding: @spacing-md;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+
+                p {
+                    margin: 0;
+                    color: #2d5a2d;
+                    font-weight: 500;
+                }
+
+                .cache-btn {
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    transition: background-color 0.3s;
+
+                    &:hover {
+                        background: #218838;
+                    }
+                }
+
+                .mobile({
+                    flex-direction: column;
+                    gap: @spacing-sm;
+                    text-align: center;
+                });
+        }
+
+        .no-cache {
+            color: #6c757d;
+            font-style: italic;
+            padding: @spacing-md;
+            background: #f8f9fa;
+            border-radius: 6px;
+            text-align: center;
+        }
+    }
+
+    // 操作按钮区域
+    .api-buttons {
+        display: flex;
+        gap: @spacing-sm;
+        justify-content: center;
         margin-bottom: @spacing-lg;
 
-        span {
-            font-weight: bold;
-            color: @text-light;
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            min-width: 140px;
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        }
+
+        .smart-fetch-btn {
+            background: #007bff;
+            color: white;
+
+            &:hover:not(:disabled) {
+                background: #0056b3;
+            }
+        }
+
+        .force-refresh-btn {
+            background: #28a745;
+            color: white;
+
+            &:hover:not(:disabled) {
+                background: #1e7e34;
+            }
+        }
+
+        .quick-test-btn {
+            background: #fd7e14;
+            color: white;
+
+            &:hover:not(:disabled) {
+                background: #e8590c;
+            }
+        }
+
+        .proxy-diagnosis-btn {
+            background: #6f42c1;
+            color: white;
+
+            &:hover:not(:disabled) {
+                background: #5a359a;
+            }
+        }
+
+        .concurrent-test-btn {
+            background: #ffc107;
+            color: #212529;
+
+            &:hover:not(:disabled) {
+                background: #e0a800;
+            }
         }
 
         .mobile({
             flex-direction: column;
-            gap: @spacing-sm;
-            text-align: center;
+            align-items: center;
         });
+}
+
+// 请求状态区域
+.request-status {
+    text-align: center;
+    margin-bottom: @spacing-lg;
+
+    p {
+        margin: 8px 0;
+
+        &.loading {
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        &.error {
+            color: #dc3545;
+            font-weight: 500;
+        }
+    }
+}
+
+// 使用说明区域
+.usage-guide {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: @spacing-md;
+
+    h4 {
+        color: #495057;
+        margin-bottom: @spacing-sm;
+        font-size: 1rem;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 20px;
+
+        li {
+            margin-bottom: 8px;
+            color: #6c757d;
+            line-height: 1.5;
+
+            strong {
+                color: #495057;
+            }
+        }
+    }
+}
+}
+
+// 统计信息区域
+.stats {
+    .flex-between();
+    background: @bg-light;
+    padding: @spacing-md;
+    border-radius: @border-radius-large;
+    margin-bottom: @spacing-lg;
+
+    span {
+        font-weight: bold;
+        color: @text-light;
+    }
+
+    .mobile({
+        flex-direction: column;
+        gap: @spacing-sm;
+        text-align: center;
+    });
 }
 
 // 添加待办事项区域
