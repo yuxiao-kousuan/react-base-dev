@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <div className="logo">
                         <span className="logo-icon">🚀</span>
                         {!sidebarCollapsed && (
-                            <span className="logo-text">React App</span>
+                            <span className="logo-text">React Base</span>
                         )}
                     </div>
                     <button
@@ -78,7 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div className="sidebar-footer">
                     {!sidebarCollapsed && (
                         <div className="footer-info">
-                            <p>© 2024 React Base App</p>
+                            <p>© 2024 React Base</p>
                             <p>Version 1.0.0</p>
                         </div>
                     )}
@@ -87,28 +87,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* 主内容区域 */}
             <main className="main-content">
-                {/* 顶部栏 */}
-                <header className="top-header">
-                    <div className="header-left">
-                        <h1 className="page-title">{getCurrentPageTitle()}</h1>
-                        <div className="breadcrumb">
-                            <span className="breadcrumb-home">🏠</span>
-                            <span className="breadcrumb-separator">/</span>
-                            <span className="breadcrumb-current">{getCurrentPageTitle()}</span>
-                        </div>
-                    </div>
-                    <div className="header-right">
-                        <div className="header-actions">
-                            <button className="action-btn" title="通知">
-                                🔔
-                            </button>
-                            <button className="action-btn" title="用户">
-                                👤
-                            </button>
-                        </div>
-                    </div>
-                </header>
-
                 {/* 页面内容 */}
                 <div className="page-content">
                     {children}
