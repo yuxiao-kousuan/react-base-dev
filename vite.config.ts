@@ -8,6 +8,7 @@ const proxyConfig = generateViteProxyConfig();
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',   // 待理解
   plugins: [react()],
   server: {
     open: true, // 自动打开浏览器
