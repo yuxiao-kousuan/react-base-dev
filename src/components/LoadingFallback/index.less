@@ -1,0 +1,48 @@
+/* NProgress 自定义样式 */
+#nprogress {
+    pointer-events: none;
+}
+
+#nprogress .bar {
+    background: linear-gradient(90deg, #4f46e5, #7c3aed, #ec4899, #f59e0b);
+    position: fixed;
+    z-index: 1031;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+    background-size: 200% 100%;
+    animation: nprogress-pulse 2s ease-in-out infinite;
+}
+
+#nprogress .peg {
+    display: block;
+    position: absolute;
+    right: 0px;
+    width: 100px;
+    height: 100%;
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.8), 0 0 5px rgba(79, 70, 229, 0.6);
+    opacity: 1.0;
+    transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* 渐变流动动画 */
+@keyframes nprogress-pulse {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* 淡入淡出动画 */
+#nprogress .bar {
+    transition: all 200ms ease;
+}

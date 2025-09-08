@@ -1,0 +1,122 @@
+/* Ant Design 自定义样式 */
+
+/* 全局样式重置 */
+.ant-layout {
+    background: #fff;
+}
+
+/* 自定义主题色彩 */
+:root {
+    --ant-primary-color: #1677ff;
+    --ant-primary-color-hover: #4096ff;
+    --ant-primary-color-active: #3730a3;
+}
+
+/* 按钮样式自定义 */
+.ant-btn-primary {
+    background-color: var(--ant-primary-color);
+    border-color: var(--ant-primary-color);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+    background-color: var(--ant-primary-color-hover);
+    border-color: var(--ant-primary-color-hover);
+}
+
+.ant-btn-primary:active {
+    background-color: var(--ant-primary-color-active);
+    border-color: var(--ant-primary-color-active);
+}
+
+/* 卡片样式 */
+.ant-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ant-card-head {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* 输入框样式 */
+.ant-input,
+.ant-select-selector {
+    border-radius: 6px;
+}
+
+.ant-input:focus,
+.ant-select-focused .ant-select-selector {
+    border-color: var(--ant-primary-color);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+/* 表格样式 */
+.ant-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.ant-table-thead>tr>th {
+    background-color: #fafafa;
+    font-weight: 600;
+}
+
+/* 菜单样式 */
+.ant-menu {
+    border-right: none;
+}
+
+.ant-menu-item {
+    border-radius: 6px;
+    margin: 4px 8px;
+    width: calc(100% - 16px);
+}
+
+.ant-menu-item-selected {
+    background-color: #e0e7ff;
+    color: var(--ant-primary-color);
+}
+
+/* 分页样式 */
+.ant-pagination {
+    text-align: center;
+    margin-top: 16px;
+}
+
+/* 消息提示样式 */
+.ant-message {
+    z-index: 9999;
+}
+
+/* 模态框样式 */
+.ant-modal {
+    border-radius: 8px;
+}
+
+.ant-modal-header {
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 8px 8px 0 0;
+}
+
+/* 抽屉样式 */
+.ant-drawer {
+    border-radius: 8px 0 0 8px;
+}
+
+/* 工具提示样式 */
+.ant-tooltip {
+    z-index: 9999;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .ant-card {
+        margin: 8px;
+    }
+
+    .ant-btn {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}

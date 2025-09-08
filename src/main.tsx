@@ -7,7 +7,9 @@ import Layout from './components/Layout'
 
 import AppStore, { AppStore as AppStoreType } from './stores/AppStore'
 import WelcomePageStore from './stores/WelcomePageStore'
+import LoadingFallback from './components/LoadingFallback'
 import './index.less'
+import './assets/styles/antd-custom.css' // 后期主题切换可考虑
 import fontFamily from './assets/fontFamily'
 
 // 创建明确的 stores 对象
@@ -41,7 +43,7 @@ function App(props: IProps): ReactElement {
                   path={route.path}
                   key={route.path}
                   element={(
-                    <Suspense fallback={<div>组件切换Loading...</div>}>
+                    <Suspense fallback={<LoadingFallback />}>
                       <route.component />
                     </Suspense>
                   )}
