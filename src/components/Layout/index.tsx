@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { routeConfig } from '@src/router';
+import RoutesConfig from '@src/router';
 import './index.less';
 
 interface LayoutProps {
@@ -23,7 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     const getCurrentPageTitle = () => {
-        const currentRoute = routeConfig.find(route =>
+        const currentRoute = RoutesConfig.find(route =>
             route.path === '/'
                 ? location.pathname === '/'
                 : location.pathname.startsWith(route.path)
@@ -53,7 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                 <nav className="sidebar-nav">
                     <ul className="nav-list">
-                        {routeConfig
+                        {RoutesConfig
                             .filter(route => route.showInMenu)
                             .map((route) => (
                                 <li key={route.path} className="nav-item">

@@ -9,12 +9,8 @@ interface IProps {
     welcomePageStore: WelcomePageStore;
 }
 
-Index.defaultProps = {
-    prefixCls: 'mc-WelcomePage'
-};
-
 function Index(props: IProps): ReactElement {
-    const { prefixCls, welcomePageStore } = props;
+    const { prefixCls = 'mc-WelcomePage', welcomePageStore } = props;
     const { isVisible } = welcomePageStore;
 
 

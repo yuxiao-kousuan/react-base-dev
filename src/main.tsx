@@ -3,19 +3,28 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Provider, inject, observer } from 'mobx-react'
 import ReactDOM from 'react-dom/client'
 import RoutesConfig from './router'
-import stores from './stores'
+import Layout from './components/Layout'
 
-import { AppStore } from './stores/AppStore'
+import AppStore, { AppStore as AppStoreType } from './stores/AppStore'
+import WelcomePageStore from './stores/WelcomePageStore'
 import './index.less'
 import fontFamily from './assets/fontFamily'
 
+// 创建明确的 stores 对象
+const stores = {
+  appStore: AppStore,
+  welcomePageStore: WelcomePageStore
+};
+
 interface IProps {
-  appStore: AppStore;
+  appStore: AppStoreType;
 }
 
 function App(props: IProps): ReactElement {
   const { appStore } = props;
   const { loading } = appStore
+
+  console.log(loading)
 
   useEffect(() => {
     document.body.style.fontFamily = fontFamily.default
@@ -24,16 +33,15 @@ function App(props: IProps): ReactElement {
   return (
     <React.StrictMode>
       <BrowserRouter>
-        {loading ?
-          <div>Loading...</div> :
+        {<Layout>
           <Routes>
             {
               RoutesConfig.map((route, index) => (
                 <Route
-                  {...route}
+                  path={route.path}
                   key={route.path}
                   element={(
-                    <Suspense fallback={<div>Loading...</div>}>
+                    <Suspense fallback={<div>组件切换Loading...</div>}>
                       <route.component />
                     </Suspense>
                   )}
@@ -42,6 +50,7 @@ function App(props: IProps): ReactElement {
             }
             <Route path='*' element={<div>无此页面</div>} />
           </Routes>
+        </Layout>
         }
       </BrowserRouter>
     </React.StrictMode>
@@ -50,9 +59,9 @@ function App(props: IProps): ReactElement {
 
 const Index = inject('appStore')(observer(App));
 
-
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <Provider {...stores}>
+    {/* @ts-ignore */}
     <Index />
   </Provider>
 )
