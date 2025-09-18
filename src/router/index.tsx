@@ -15,7 +15,7 @@ const routes: RouteConfig[] = [
     {
         path: '/',
         component: lazy(() => import('@src/page/WelcomePage')),
-        title: 'Dashboard',
+        title: '欢迎你哦',
         icon: <DashboardOutlined />,
         showInMenu: true,
         group: 'Navigation'
@@ -45,18 +45,18 @@ const routes: RouteConfig[] = [
         group: 'Authentication'
     },
     {
-        path: '/charts',
-        component: lazy(() => import('@src/page/Charts')),
-        title: '图表分析',
-        icon: '📈',
-        showInMenu: true,
-        group: 'Authentication'
-    },
-    {
         path: '/antd-demo',
         component: lazy(() => import('@src/components/AntdDemo')),
         title: 'Ant Design 演示',
         icon: '🎨',
+        showInMenu: true,
+        group: 'Utilities'
+    },
+    {
+        path: '/adaptive-layout',
+        component: lazy(() => import('@src/page/AdaptiveLayoutDemo')),
+        title: '自适应布局',
+        icon: '📐',
         showInMenu: true,
         group: 'Utilities'
     }
