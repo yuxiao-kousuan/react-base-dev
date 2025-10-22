@@ -59,6 +59,14 @@ const routes: RouteConfig[] = [
         icon: '📐',
         showInMenu: true,
         group: 'Utilities'
+    },
+    {
+        path: '/virtual-meeting',
+        component: lazy(() => import('@src/page/VirtualMeetingRoom')),
+        title: '虚拟会议室',
+        icon: '🎥',
+        showInMenu: true,
+        group: 'Navigation'
     }
 ];
 
