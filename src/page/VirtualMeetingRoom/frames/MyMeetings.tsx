@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useState, useEffect } from 'react';
 import { css } from '@emotion/react';
-import { Card, Button, Tag, Space, Empty, Modal, message, Form, Input, DatePicker, TimePicker, Select, Radio, Checkbox, InputNumber, Collapse, Badge } from 'antd';
+import { Card, Button, Tag, Space, Empty, Modal, message, Form, Input, DatePicker, Select, Radio, Checkbox, Collapse, Badge, TreeSelect, Tooltip } from 'antd';
 import {
     VideoCameraOutlined,
     ClockCircleOutlined,
@@ -11,9 +11,13 @@ import {
     CalendarOutlined,
     PlusOutlined,
     SyncOutlined,
-    UserOutlined
+    UserOutlined,
+    EnvironmentOutlined,
+    ReloadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+
+const { RangePicker } = DatePicker;
 
 const { Panel } = Collapse;
 
@@ -44,6 +48,7 @@ interface Meeting {
     duration: number;
     meetingId: string;
     participants: Participant[]; // 改为参会人员对象数组
+    locations?: string[]; // 地址：区域-厂-线的值数组
     hasPassword: boolean;
     isRecurring?: boolean;
     recurrencePattern?: string; // 重复描述（用于显示）
@@ -186,6 +191,40 @@ const styles = {
             flex-direction: column;
             align-items: flex-start;
             gap: 16px;
+        }
+    `,
+
+    headerLeft: css`
+        display: flex;
+        align-items: center;
+        gap: 24px;
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+    `,
+
+    currentTime: css`
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+        color: #1890ff;
+        background: linear-gradient(135deg, #e6f7ff 0%, #f0f7ff 100%);
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid #91d5ff;
+        font-weight: 500;
+
+        .anticon {
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            font-size: 14px;
+            padding: 6px 12px;
         }
     `,
 
@@ -359,12 +398,115 @@ const styles = {
 };
 
 function MyMeetings(): ReactElement {
+    // 当前时间状态
+    const [currentTime, setCurrentTime] = useState(dayjs());
+
     // 生成测试用的时间：确保能展示四种不同状态
-    const now = dayjs();
+    const now = currentTime;
     const completedTime = now.subtract(2, 'hour'); // 2小时前开始，已完成
     const inProgressTime = now.subtract(10, 'minute'); // 10分钟前开始，正在进行
     const upcomingTime = now.add(10, 'minute'); // 10分钟后开始，即将开始
     const scheduledTime = now.add(2, 'hour'); // 2小时后开始，已预约
+
+    // 格式化持续时间显示
+    const formatDuration = (minutes: number): string => {
+        if (minutes === 0) return '- 分钟';
+
+        const days = Math.floor(minutes / 1440);
+        const hours = Math.floor((minutes % 1440) / 60);
+        const mins = minutes % 60;
+
+        const parts: string[] = [];
+        if (days > 0) parts.push(`${days}天`);
+        if (hours > 0) parts.push(`${hours}小时`);
+        if (mins > 0) parts.push(`${mins}分钟`);
+
+        return parts.join(' ');
+    };
+
+    // 地址树形数据：区域-厂-线
+    const locationTreeData = [
+        {
+            title: '华东区域',
+            value: 'east',
+            children: [
+                {
+                    title: '上海工厂',
+                    value: 'east-shanghai',
+                    children: [
+                        { title: 'A生产线', value: 'east-shanghai-a' },
+                        { title: 'B生产线', value: 'east-shanghai-b' },
+                        { title: 'C生产线', value: 'east-shanghai-c' },
+                    ],
+                },
+                {
+                    title: '杭州工厂',
+                    value: 'east-hangzhou',
+                    children: [
+                        { title: '一号线', value: 'east-hangzhou-1' },
+                        { title: '二号线', value: 'east-hangzhou-2' },
+                    ],
+                },
+            ],
+        },
+        {
+            title: '华南区域',
+            value: 'south',
+            children: [
+                {
+                    title: '深圳工厂',
+                    value: 'south-shenzhen',
+                    children: [
+                        { title: 'SMT生产线', value: 'south-shenzhen-smt' },
+                        { title: '组装线', value: 'south-shenzhen-assembly' },
+                        { title: '测试线', value: 'south-shenzhen-test' },
+                    ],
+                },
+                {
+                    title: '广州工厂',
+                    value: 'south-guangzhou',
+                    children: [
+                        { title: '自动化产线', value: 'south-guangzhou-auto' },
+                        { title: '手工产线', value: 'south-guangzhou-manual' },
+                    ],
+                },
+            ],
+        },
+        {
+            title: '华北区域',
+            value: 'north',
+            children: [
+                {
+                    title: '北京工厂',
+                    value: 'north-beijing',
+                    children: [
+                        { title: '精密加工线', value: 'north-beijing-precision' },
+                        { title: '装配线', value: 'north-beijing-assembly' },
+                    ],
+                },
+            ],
+        },
+    ];
+
+    // 根据地址值获取完整路径名称
+    const getLocationLabel = (value: string): string => {
+        const findNode = (nodes: any[], val: string, path: string[] = []): string[] | null => {
+            for (const node of nodes) {
+                const currentPath = [...path, node.title];
+                if (node.value === val) {
+                    return currentPath;
+                }
+                if (node.children) {
+                    const found = findNode(node.children, val, currentPath);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        const path = findNode(locationTreeData, value);
+        return path ? path.join(' / ') : value;
+    };
 
     const [meetings, setMeetings] = useState<Meeting[]>([
         {
@@ -387,6 +529,7 @@ function MyMeetings(): ReactElement {
                 { id: 'user7', name: '周九' },
                 { id: 'user8', name: '吴十' },
             ],
+            locations: ['east-shanghai-a', 'east-shanghai-b'],
             hasPassword: false,
             isRecurring: true,
             recurrencePattern: '每天重复，直到 2025-12-31',
@@ -416,6 +559,7 @@ function MyMeetings(): ReactElement {
                 { id: 'user7', name: '周九' },
                 { id: 'user8', name: '吴十' },
             ],
+            locations: ['south-shenzhen-smt'],
             hasPassword: false,
             isRecurring: true,
             recurrencePattern: '每周一重复',
@@ -448,6 +592,7 @@ function MyMeetings(): ReactElement {
                 { id: 'user11', name: '陈十三' },
                 { id: 'user12', name: '楚十四' },
             ],
+            locations: ['north-beijing-precision', 'north-beijing-assembly'],
             hasPassword: true,
         },
         {
@@ -467,6 +612,7 @@ function MyMeetings(): ReactElement {
                 { id: 'user5', name: '钱七' },
                 { id: 'user7', name: '周九' },
             ],
+            locations: ['east-hangzhou-1', 'south-guangzhou-auto', 'south-guangzhou-manual'],
             hasPassword: false,
         },
     ]);
@@ -477,6 +623,36 @@ function MyMeetings(): ReactElement {
     const [loading, setLoading] = useState(false);
     const [recurrenceType, setRecurrenceType] = useState('none');
     const [endType, setEndType] = useState('date');
+    const [meetingDuration, setMeetingDuration] = useState<number>(0); // 会议持续时间（分钟）
+    const [refreshing, setRefreshing] = useState(false); // 手动刷新状态
+
+    // 更新时间函数
+    const updateCurrentTime = () => {
+        setCurrentTime(dayjs());
+    };
+
+    // 手动刷新函数
+    const handleManualRefresh = async () => {
+        setRefreshing(true);
+        try {
+            updateCurrentTime();
+            message.success('会议状态已更新');
+        } catch (error) {
+            message.error('刷新失败，请重试');
+        } finally {
+            setRefreshing(false);
+        }
+    };
+
+    // 自动刷新：每秒更新时间显示，每分钟更新会议状态
+    useEffect(() => {
+        // 每秒更新时间显示
+        const timeInterval = setInterval(() => {
+            updateCurrentTime();
+        }, 1000); // 1秒更新一次时间显示
+
+        return () => clearInterval(timeInterval);
+    }, []);
 
     const handleJoinMeeting = (meeting: Meeting) => {
         message.success(`正在加入会议: ${meeting.title}`);
@@ -493,14 +669,16 @@ function MyMeetings(): ReactElement {
         };
 
         // 预填充表单数据
+        const meetingStart = dayjs(`${meeting.date} ${meeting.time}`, 'YYYY-MM-DD HH:mm');
+        const meetingEnd = meetingStart.add(meeting.duration, 'minute');
+
         const formValues: any = {
             title: meeting.title,
             description: meeting.description,
             meetingType: meeting.meetingType,
             participants: meeting.participants.map(p => p.id), // 设置参会人员ID数组
-            date: dayjs(meeting.date, 'YYYY-MM-DD'),
-            time: dayjs(meeting.time, 'HH:mm'),
-            duration: meeting.duration,
+            locations: meeting.locations || [], // 设置地址数组
+            timeRange: [meetingStart, meetingEnd], // 会议开始和结束时间
             recurrenceType: recurrenceConfig.type,
             endType: recurrenceConfig.endType,
         };
@@ -523,6 +701,7 @@ function MyMeetings(): ReactElement {
         // 设置重复会议相关状态
         setRecurrenceType(recurrenceConfig.type);
         setEndType(recurrenceConfig.endType);
+        setMeetingDuration(meeting.duration); // 设置持续时间显示
     };
 
     const handleDeleteMeeting = (meeting: Meeting) => {
@@ -550,6 +729,7 @@ function MyMeetings(): ReactElement {
         form.resetFields();
         setRecurrenceType('none');
         setEndType('date');
+        setMeetingDuration(0);
         setCreateModalVisible(true);
     };
 
@@ -614,6 +794,12 @@ function MyMeetings(): ReactElement {
                 values.participants?.includes(p.id)
             );
 
+            // 从时间范围中提取开始时间、结束时间和持续时间
+            const [startTime, endTime] = values.timeRange;
+            const meetingDate = startTime.format('YYYY-MM-DD');
+            const meetingTime = startTime.format('HH:mm');
+            const duration = endTime.diff(startTime, 'minute'); // 计算分钟数
+
             if (editingMeeting) {
                 // 编辑现有会议
                 const updatedMeeting: Meeting = {
@@ -621,10 +807,11 @@ function MyMeetings(): ReactElement {
                     title: values.title,
                     description: values.description,
                     meetingType: values.meetingType,
-                    date: values.date.format('YYYY-MM-DD'),
-                    time: values.time.format('HH:mm'),
-                    duration: Number(values.duration), // 确保是数字
+                    date: meetingDate,
+                    time: meetingTime,
+                    duration: duration,
                     participants: selectedParticipants,
+                    locations: values.locations || [],
                     isRecurring: recurrenceType !== 'none',
                     recurrencePattern: recurrenceType !== 'none' ? recurrenceDesc : undefined,
                     recurrenceConfig: recurrenceConfig,
@@ -640,10 +827,11 @@ function MyMeetings(): ReactElement {
                     description: values.description,
                     meetingType: values.meetingType,
                     organizer: '当前用户', // 这里应该从用户信息中获取
-                    date: values.date.format('YYYY-MM-DD'),
-                    time: values.time.format('HH:mm'),
-                    duration: Number(values.duration), // 确保是数字
+                    date: meetingDate,
+                    time: meetingTime,
+                    duration: duration,
                     participants: selectedParticipants,
+                    locations: values.locations || [],
                     meetingId: `${Math.random().toString(36).substr(2, 3)}-${Math.random().toString(36).substr(2, 3)}-${Math.random().toString(36).substr(2, 3)}`,
                     hasPassword: false,
                     isRecurring: recurrenceType !== 'none',
@@ -704,8 +892,25 @@ function MyMeetings(): ReactElement {
         <div css={styles.container}>
             {/* 页面头部 */}
             <div css={styles.pageHeader}>
-                <h1>我的会议</h1>
+                <div css={styles.headerLeft}>
+                    <h1>我的会议</h1>
+                    <div css={styles.currentTime}>
+                        <ClockCircleOutlined />
+                        <span>{currentTime.format('YYYY-MM-DD HH:mm:ss')}</span>
+                    </div>
+                </div>
                 <div css={styles.quickActions}>
+                    <Tooltip title="页面默认1分钟更新会议状态，时间每秒更新，点击按钮可以实时更新会议状态">
+                        <Button
+                            type="default"
+                            size="large"
+                            icon={<ReloadOutlined />}
+                            onClick={handleManualRefresh}
+                            loading={refreshing}
+                        >
+                            刷新状态
+                        </Button>
+                    </Tooltip>
                     <Button
                         type="default"
                         size="large"
@@ -775,16 +980,22 @@ function MyMeetings(): ReactElement {
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <CalendarOutlined />
-                                                <span>{meeting.date} {meeting.time}</span>
-                                            </div>
-                                            <div css={styles.infoItem}>
-                                                <ClockCircleOutlined />
-                                                <span>{meeting.duration} 分钟</span>
+                                                <span>
+                                                    {meeting.date} {meeting.time} ~ {dayjs(`${meeting.date} ${meeting.time}`, 'YYYY-MM-DD HH:mm').add(meeting.duration, 'minute').format('YYYY-MM-DD HH:mm')}
+                                                </span>
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <TeamOutlined />
                                                 <span>{meeting.participants.length} 人参与</span>
                                             </div>
+                                            {meeting.locations && meeting.locations.length > 0 && (
+                                                <div css={styles.infoItem}>
+                                                    <EnvironmentOutlined />
+                                                    <span style={{ fontSize: 13 }}>
+                                                        {meeting.locations.map(loc => getLocationLabel(loc)).join('; ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                             {meeting.isRecurring && (
                                                 <div css={styles.infoItem}>
                                                     <SyncOutlined />
@@ -880,16 +1091,22 @@ function MyMeetings(): ReactElement {
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <CalendarOutlined />
-                                                <span>{meeting.date} {meeting.time}</span>
-                                            </div>
-                                            <div css={styles.infoItem}>
-                                                <ClockCircleOutlined />
-                                                <span>{meeting.duration} 分钟</span>
+                                                <span>
+                                                    {meeting.date} {meeting.time} ~ {dayjs(`${meeting.date} ${meeting.time}`, 'YYYY-MM-DD HH:mm').add(meeting.duration, 'minute').format('YYYY-MM-DD HH:mm')}
+                                                </span>
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <TeamOutlined />
                                                 <span>{meeting.participants.length} 人参与</span>
                                             </div>
+                                            {meeting.locations && meeting.locations.length > 0 && (
+                                                <div css={styles.infoItem}>
+                                                    <EnvironmentOutlined />
+                                                    <span style={{ fontSize: 13 }}>
+                                                        {meeting.locations.map(loc => getLocationLabel(loc)).join('; ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                             {meeting.isRecurring && (
                                                 <div css={styles.infoItem}>
                                                     <SyncOutlined />
@@ -981,16 +1198,22 @@ function MyMeetings(): ReactElement {
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <CalendarOutlined />
-                                                <span>{meeting.date} {meeting.time}</span>
-                                            </div>
-                                            <div css={styles.infoItem}>
-                                                <ClockCircleOutlined />
-                                                <span>{meeting.duration} 分钟</span>
+                                                <span>
+                                                    {meeting.date} {meeting.time} ~ {dayjs(`${meeting.date} ${meeting.time}`, 'YYYY-MM-DD HH:mm').add(meeting.duration, 'minute').format('YYYY-MM-DD HH:mm')}
+                                                </span>
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <TeamOutlined />
                                                 <span>{meeting.participants.length} 人参与</span>
                                             </div>
+                                            {meeting.locations && meeting.locations.length > 0 && (
+                                                <div css={styles.infoItem}>
+                                                    <EnvironmentOutlined />
+                                                    <span style={{ fontSize: 13 }}>
+                                                        {meeting.locations.map(loc => getLocationLabel(loc)).join('; ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <div css={styles.meetingActions}>
@@ -1082,16 +1305,22 @@ function MyMeetings(): ReactElement {
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <CalendarOutlined />
-                                                <span>{meeting.date} {meeting.time}</span>
-                                            </div>
-                                            <div css={styles.infoItem}>
-                                                <ClockCircleOutlined />
-                                                <span>{meeting.duration} 分钟</span>
+                                                <span>
+                                                    {meeting.date} {meeting.time} ~ {dayjs(`${meeting.date} ${meeting.time}`, 'YYYY-MM-DD HH:mm').add(meeting.duration, 'minute').format('YYYY-MM-DD HH:mm')}
+                                                </span>
                                             </div>
                                             <div css={styles.infoItem}>
                                                 <TeamOutlined />
                                                 <span>{meeting.participants.length} 人参与</span>
                                             </div>
+                                            {meeting.locations && meeting.locations.length > 0 && (
+                                                <div css={styles.infoItem}>
+                                                    <EnvironmentOutlined />
+                                                    <span style={{ fontSize: 13 }}>
+                                                        {meeting.locations.map(loc => getLocationLabel(loc)).join('; ')}
+                                                    </span>
+                                                </div>
+                                            )}
                                             {meeting.isRecurring && (
                                                 <div css={styles.infoItem}>
                                                     <SyncOutlined />
@@ -1151,7 +1380,6 @@ function MyMeetings(): ReactElement {
                     initialValues={{
                         recurrenceType: 'none',
                         endType: 'date',
-                        duration: 60,
                     }}
                 >
                     <Form.Item
@@ -1203,44 +1431,70 @@ function MyMeetings(): ReactElement {
                         </Select>
                     </Form.Item>
 
-                    <Space size="large" style={{ width: '100%' }}>
-                        <Form.Item
-                            label="开始日期"
-                            name="date"
-                            rules={[{ required: true, message: '请选择日期' }]}
-                        >
-                            <DatePicker
-                                style={{ width: 200 }}
-                                placeholder="选择日期"
-                            />
-                        </Form.Item>
+                    <Form.Item
+                        label="会议地址"
+                        name="locations"
+                        rules={[{ required: true, message: '请选择会议地址' }]}
+                    >
+                        <TreeSelect
+                            treeData={locationTreeData}
+                            placeholder="请选择区域、工厂和生产线（可多选）"
+                            size="large"
+                            multiple
+                            treeCheckable
+                            showCheckedStrategy={TreeSelect.SHOW_CHILD}
+                            showSearch
+                            treeNodeFilterProp="title"
+                            filterTreeNode={(input, treeNode) => {
+                                const title = treeNode.title as string;
+                                return title.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                            }}
+                            maxTagCount="responsive"
+                            style={{ width: '100%' }}
+                            dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+                            treeDefaultExpandAll={false}
+                        />
+                    </Form.Item>
 
-                        <Form.Item
-                            label="开始时间"
-                            name="time"
-                            rules={[{ required: true, message: '请选择时间' }]}
-                        >
-                            <TimePicker
-                                style={{ width: 150 }}
-                                format="HH:mm"
-                                placeholder="选择时间"
-                            />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="持续时间"
-                            name="duration"
-                            initialValue={60}
-                        >
-                            <InputNumber
-                                placeholder="分钟"
-                                addonAfter="分钟"
-                                style={{ width: 120 }}
-                                min={1}
-                                max={1440}
-                            />
-                        </Form.Item>
-                    </Space>
+                    <Form.Item label="会议时间">
+                        <Space style={{ width: '100%', display: 'flex', alignItems: 'flex-start' }}>
+                            <Form.Item
+                                name="timeRange"
+                                rules={[{ required: true, message: '请选择会议开始和结束时间' }]}
+                                noStyle
+                            >
+                                <RangePicker
+                                    showTime={{ format: 'HH:mm' }}
+                                    format="YYYY-MM-DD HH:mm"
+                                    placeholder={['开始时间', '结束时间']}
+                                    size="large"
+                                    onChange={(dates) => {
+                                        if (dates && dates[0] && dates[1]) {
+                                            const duration = dates[1].diff(dates[0], 'minute');
+                                            setMeetingDuration(duration);
+                                        } else {
+                                            setMeetingDuration(0);
+                                        }
+                                    }}
+                                />
+                            </Form.Item>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                height: '40px',
+                                padding: '0 12px',
+                                background: '#f5f5f5',
+                                borderRadius: '6px',
+                                minWidth: '120px',
+                                whiteSpace: 'nowrap'
+                            }}>
+                                <ClockCircleOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
+                                <span style={{ fontWeight: 500, color: '#333' }}>
+                                    {formatDuration(meetingDuration)}
+                                </span>
+                            </div>
+                        </Space>
+                    </Form.Item>
 
                     <Form.Item
                         label="会议描述"
