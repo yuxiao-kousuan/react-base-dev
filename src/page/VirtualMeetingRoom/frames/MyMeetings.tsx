@@ -29,9 +29,8 @@ interface RecurrenceConfig {
     type: 'none' | 'daily' | 'weekly' | 'monthly';
     weekdays?: number[]; // 周重复时选择的星期几 (0-6)
     monthlyType?: 'date' | 'weekday'; // 月重复方式
-    endType: 'date' | 'count' | 'never';
+    endType: 'date' | 'never';
     endDate?: string; // YYYY-MM-DD
-    occurrences?: number; // 重复次数
 }
 
 interface Meeting {
@@ -51,19 +50,26 @@ interface Meeting {
     recurrenceConfig?: RecurrenceConfig; // 重复配置（用于编辑）
 }
 
-type MeetingStatus = 'upcoming' | 'in-progress' | 'scheduled';
+type MeetingStatus = 'upcoming' | 'in-progress' | 'scheduled' | 'completed';
 
 /**
- * 根据会议日期和时间判断会议状态
+ * 根据会议日期、时间和持续时间判断会议状态
  * @param date 会议日期 (YYYY-MM-DD)
  * @param time 会议时间 (HH:mm)
+ * @param duration 会议持续时间（分钟）
  * @returns 会议状态
  */
-const getMeetingStatus = (date: string, time: string): MeetingStatus => {
+const getMeetingStatus = (date: string, time: string, duration: number): MeetingStatus => {
     const now = dayjs();
     const meetingStart = dayjs(`${date} ${time}`, 'YYYY-MM-DD HH:mm');
+    const meetingEnd = meetingStart.add(duration, 'minute');
 
-    // 如果当前时间已经超过会议开始时间，则是进行中
+    // 如果当前时间已经超过会议结束时间，则是已完成
+    if (now.isAfter(meetingEnd)) {
+        return 'completed';
+    }
+
+    // 如果当前时间在会议开始和结束之间，则是进行中
     if (now.isAfter(meetingStart) || now.isSame(meetingStart)) {
         return 'in-progress';
     }
@@ -153,6 +159,13 @@ const styles = {
             color: #666;
             .anticon {
                 color: #666;
+            }
+        }
+
+        &.completed {
+            color: #8c8c8c;
+            .anticon {
+                color: #8c8c8c;
             }
         }
     `,
@@ -245,6 +258,12 @@ const styles = {
     scheduledMeeting: css`
         border: 1px solid #d9d9d9;
         background: #ffffff;
+    `,
+
+    completedMeeting: css`
+        border: 1px solid #d9d9d9;
+        background: #fafafa;
+        opacity: 0.85;
     `,
 
     meetingHeader: css`
@@ -340,8 +359,9 @@ const styles = {
 };
 
 function MyMeetings(): ReactElement {
-    // 生成测试用的时间：确保能展示三种不同状态
+    // 生成测试用的时间：确保能展示四种不同状态
     const now = dayjs();
+    const completedTime = now.subtract(2, 'hour'); // 2小时前开始，已完成
     const inProgressTime = now.subtract(10, 'minute'); // 10分钟前开始，正在进行
     const upcomingTime = now.add(10, 'minute'); // 10分钟后开始，即将开始
     const scheduledTime = now.add(2, 'hour'); // 2小时后开始，已预约
@@ -398,12 +418,11 @@ function MyMeetings(): ReactElement {
             ],
             hasPassword: false,
             isRecurring: true,
-            recurrencePattern: '每周一重复，共 10 次',
+            recurrencePattern: '每周一重复',
             recurrenceConfig: {
                 type: 'weekly',
                 weekdays: [1],
-                endType: 'count',
-                occurrences: 10
+                endType: 'never'
             }
         },
         {
@@ -430,6 +449,25 @@ function MyMeetings(): ReactElement {
                 { id: 'user12', name: '楚十四' },
             ],
             hasPassword: true,
+        },
+        {
+            id: '4',
+            title: '技术分享会',
+            description: 'React最佳实践分享',
+            meetingType: 'efficiency',
+            organizer: '赵六',
+            date: completedTime.format('YYYY-MM-DD'),
+            time: completedTime.format('HH:mm'),
+            duration: 60,
+            meetingId: '111-222-333',
+            participants: [
+                { id: 'user1', name: '张三' },
+                { id: 'user2', name: '李四' },
+                { id: 'user4', name: '赵六' },
+                { id: 'user5', name: '钱七' },
+                { id: 'user7', name: '周九' },
+            ],
+            hasPassword: false,
         },
     ]);
 
@@ -478,10 +516,6 @@ function MyMeetings(): ReactElement {
 
         if (recurrenceConfig.endType === 'date' && recurrenceConfig.endDate) {
             formValues.endDate = dayjs(recurrenceConfig.endDate, 'YYYY-MM-DD');
-        }
-
-        if (recurrenceConfig.endType === 'count' && recurrenceConfig.occurrences) {
-            formValues.occurrences = recurrenceConfig.occurrences;
         }
 
         form.setFieldsValue(formValues);
@@ -544,8 +578,6 @@ function MyMeetings(): ReactElement {
 
                 if (values.endType === 'date' && values.endDate) {
                     recurrenceDesc += `重复，直到 ${values.endDate.format('YYYY-MM-DD')}`;
-                } else if (values.endType === 'count' && values.occurrences) {
-                    recurrenceDesc += `重复，共 ${values.occurrences} 次`;
                 } else {
                     recurrenceDesc += '重复';
                 }
@@ -556,8 +588,7 @@ function MyMeetings(): ReactElement {
                     endType: values.endType || 'date',
                     weekdays: values.weekdays,
                     monthlyType: values.monthlyType,
-                    endDate: values.endDate?.format('YYYY-MM-DD'),
-                    occurrences: values.occurrences
+                    endDate: values.endDate?.format('YYYY-MM-DD')
                 };
             }
 
@@ -646,6 +677,7 @@ function MyMeetings(): ReactElement {
             'upcoming': { color: 'blue', text: '即将开始' },
             'in-progress': { color: 'green', text: '进行中' },
             'scheduled': { color: 'default', text: '已预约' },
+            'completed': { color: 'default', text: '已完成' },
         };
         const { color, text } = statusMap[status];
         return <Tag color={color}>{text}</Tag>;
@@ -663,9 +695,10 @@ function MyMeetings(): ReactElement {
     };
 
     // 按状态分组会议（根据时间动态计算）
-    const inProgressMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time) === 'in-progress');
-    const upcomingMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time) === 'upcoming');
-    const scheduledMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time) === 'scheduled');
+    const inProgressMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time, m.duration) === 'in-progress');
+    const upcomingMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time, m.duration) === 'upcoming');
+    const scheduledMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time, m.duration) === 'scheduled');
+    const completedMeetings = meetings.filter(m => getMeetingStatus(m.date, m.time, m.duration) === 'completed');
 
     return (
         <div css={styles.container}>
@@ -727,7 +760,7 @@ function MyMeetings(): ReactElement {
                                                 </h3>
                                                 <Space>
                                                     {getMeetingTypeTag(meeting.meetingType)}
-                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time))}
+                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time, meeting.duration))}
                                                 </Space>
                                             </div>
                                             {meeting.description && (
@@ -832,7 +865,7 @@ function MyMeetings(): ReactElement {
                                                 </h3>
                                                 <Space>
                                                     {getMeetingTypeTag(meeting.meetingType)}
-                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time))}
+                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time, meeting.duration))}
                                                 </Space>
                                             </div>
                                             {meeting.description && (
@@ -933,7 +966,7 @@ function MyMeetings(): ReactElement {
                                                 <h3>{meeting.title}</h3>
                                                 <Space>
                                                     {getMeetingTypeTag(meeting.meetingType)}
-                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time))}
+                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time, meeting.duration))}
                                                 </Space>
                                             </div>
                                             {meeting.description && (
@@ -1000,6 +1033,94 @@ function MyMeetings(): ReactElement {
                 </Collapse>
             </div>
 
+            {/* 已完成的会议 */}
+            {completedMeetings.length > 0 && (
+                <div css={styles.collapseSection}>
+                    <Collapse
+                        defaultActiveKey={[]}
+                        expandIconPosition="end"
+                    >
+                        <Panel
+                            header={
+                                <div css={styles.sectionHeader} className="completed">
+                                    <ClockCircleOutlined />
+                                    <span>已完成会议</span>
+                                    <Badge
+                                        count={completedMeetings.length}
+                                        style={{ backgroundColor: '#8c8c8c' }}
+                                    />
+                                </div>
+                            }
+                            key="completed"
+                        >
+                            <div css={styles.meetingsGrid}>
+                                {completedMeetings.map(meeting => (
+                                    <Card
+                                        key={meeting.id}
+                                        css={[styles.meetingCard, styles.completedMeeting]}
+                                    >
+                                        <div css={styles.meetingHeader}>
+                                            <div css={styles.meetingTitleRow}>
+                                                <h3>
+                                                    {meeting.isRecurring && <SyncOutlined style={{ marginRight: 6, fontSize: 16 }} />}
+                                                    {meeting.title}
+                                                </h3>
+                                                <Space>
+                                                    {getMeetingTypeTag(meeting.meetingType)}
+                                                    {getStatusTag(getMeetingStatus(meeting.date, meeting.time, meeting.duration))}
+                                                </Space>
+                                            </div>
+                                            {meeting.description && (
+                                                <p css={styles.meetingDescription}>{meeting.description}</p>
+                                            )}
+                                        </div>
+
+                                        <div css={styles.meetingInfo}>
+                                            <div css={styles.infoItem}>
+                                                <UserOutlined />
+                                                <span>组织者：{meeting.organizer}</span>
+                                            </div>
+                                            <div css={styles.infoItem}>
+                                                <CalendarOutlined />
+                                                <span>{meeting.date} {meeting.time}</span>
+                                            </div>
+                                            <div css={styles.infoItem}>
+                                                <ClockCircleOutlined />
+                                                <span>{meeting.duration} 分钟</span>
+                                            </div>
+                                            <div css={styles.infoItem}>
+                                                <TeamOutlined />
+                                                <span>{meeting.participants.length} 人参与</span>
+                                            </div>
+                                            {meeting.isRecurring && (
+                                                <div css={styles.infoItem}>
+                                                    <SyncOutlined />
+                                                    <span style={{ color: '#8c8c8c', fontSize: 13 }}>
+                                                        {meeting.recurrencePattern}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div css={styles.meetingActions}>
+                                            <Space>
+                                                <Button
+                                                    danger
+                                                    icon={<DeleteOutlined />}
+                                                    onClick={() => handleDeleteMeeting(meeting)}
+                                                >
+                                                    删除
+                                                </Button>
+                                            </Space>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        </Panel>
+                    </Collapse>
+                </div>
+            )}
+
             {/* 创建会议弹窗 */}
             <Modal
                 title={editingMeeting ? "编辑会议" : "预约会议"}
@@ -1030,7 +1151,6 @@ function MyMeetings(): ReactElement {
                     initialValues={{
                         recurrenceType: 'none',
                         endType: 'date',
-                        occurrences: 10,
                         duration: 60,
                     }}
                 >
@@ -1198,7 +1318,6 @@ function MyMeetings(): ReactElement {
                                     <Radio.Group onChange={(e) => setEndType(e.target.value)}>
                                         <Space direction="vertical">
                                             <Radio value="date">结束日期</Radio>
-                                            <Radio value="count">重复次数</Radio>
                                             <Radio value="never">永不结束</Radio>
                                         </Space>
                                     </Radio.Group>
@@ -1212,21 +1331,6 @@ function MyMeetings(): ReactElement {
                                         <DatePicker
                                             style={{ width: '100%' }}
                                             placeholder="选择结束日期"
-                                        />
-                                    </Form.Item>
-                                )}
-
-                                {endType === 'count' && (
-                                    <Form.Item
-                                        name="occurrences"
-                                        rules={[{ required: true, message: '请输入重复次数' }]}
-                                    >
-                                        <InputNumber
-                                            min={1}
-                                            max={365}
-                                            style={{ width: '100%' }}
-                                            placeholder="输入重复次数"
-                                            addonAfter="次"
                                         />
                                     </Form.Item>
                                 )}
