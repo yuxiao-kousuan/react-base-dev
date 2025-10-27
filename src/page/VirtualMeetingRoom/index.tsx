@@ -4,10 +4,12 @@ import { css } from '@emotion/react';
 import { Tabs } from 'antd';
 import {
     CalendarOutlined,
-    HistoryOutlined
+    HistoryOutlined,
+    UserAddOutlined
 } from '@ant-design/icons';
 import MyMeetings from './frames/MyMeetings';
 import MeetingHistory from './frames/MeetingHistory';
+import MyCreateMeetings from './frames/MyCreateMeetings';
 const { TabPane } = Tabs;
 
 const styles = {
@@ -135,6 +137,18 @@ function VirtualMeetingRoom(): ReactElement {
                         key="my"
                     >
                         <MyMeetings />
+                    </TabPane>
+
+                    <TabPane
+                        tab={
+                            <span>
+                                <UserAddOutlined />
+                                我创建的
+                            </span>
+                        }
+                        key="created"
+                    >
+                        <MyCreateMeetings />
                     </TabPane>
 
                     <TabPane

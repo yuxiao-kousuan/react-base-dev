@@ -1,28 +1,21 @@
 /** @jsxImportSource @emotion/react */
 import React, { ReactElement, useState, useEffect } from 'react';
 import { css } from '@emotion/react';
-import { Card, Button, Tag, Space, Empty, Modal, message, Form, Input, DatePicker, Select, Radio, Checkbox, Collapse, Badge, TreeSelect, Tooltip } from 'antd';
+import { Card, Button, Tag, Space, Empty, message, Collapse, Badge, Tooltip } from 'antd';
 import {
     VideoCameraOutlined,
     ClockCircleOutlined,
-    EditOutlined,
-    DeleteOutlined,
     TeamOutlined,
     CalendarOutlined,
-    PlusOutlined,
     SyncOutlined,
     UserOutlined,
     EnvironmentOutlined,
-    ReloadOutlined
+    ReloadOutlined,
+    CopyOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
-const { RangePicker } = DatePicker;
-
 const { Panel } = Collapse;
-
-const { TextArea } = Input;
-const { Option } = Select;
 
 interface Participant {
     id: string;
@@ -353,6 +346,58 @@ const styles = {
         }
     `,
 
+    meetingIdCard: css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%);
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin: 12px 0;
+        
+        .meeting-id-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #666;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        
+        .meeting-id-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            
+            .meeting-id-text {
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+                background: #fff;
+                padding: 4px 8px;
+                border-radius: 4px;
+                border: 1px solid #d9d9d9;
+                font-size: 13px;
+                font-weight: 500;
+                color: #595959;
+                letter-spacing: 0.5px;
+            }
+            
+            .anticon {
+                color: #8c8c8c;
+                cursor: pointer;
+                font-size: 14px;
+                padding: 4px;
+                border-radius: 3px;
+                transition: all 0.3s;
+                
+                &:hover {
+                    color: #595959;
+                    background: rgba(0, 0, 0, 0.06);
+                }
+            }
+        }
+    `,
+
     meetingActions: css`
         .ant-space {
             width: 100%;
@@ -617,13 +662,6 @@ function MyMeetings(): ReactElement {
         },
     ]);
 
-    const [createModalVisible, setCreateModalVisible] = useState(false);
-    const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
-    const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
-    const [recurrenceType, setRecurrenceType] = useState('none');
-    const [endType, setEndType] = useState('date');
-    const [meetingDuration, setMeetingDuration] = useState<number>(0); // 会议持续时间（分钟）
     const [refreshing, setRefreshing] = useState(false); // 手动刷新状态
 
     // 更新时间函数
@@ -658,206 +696,12 @@ function MyMeetings(): ReactElement {
         message.success(`正在加入会议: ${meeting.title}`);
     };
 
-    const handleEditMeeting = (meeting: Meeting) => {
-        setEditingMeeting(meeting);
-        setCreateModalVisible(true);
-
-        // 从重复配置中获取数据
-        const recurrenceConfig = meeting.recurrenceConfig || {
-            type: 'none',
-            endType: 'date'
-        };
-
-        // 预填充表单数据
-        const meetingStart = dayjs(`${meeting.date} ${meeting.time}`, 'YYYY-MM-DD HH:mm');
-        const meetingEnd = meetingStart.add(meeting.duration, 'minute');
-
-        const formValues: any = {
-            title: meeting.title,
-            description: meeting.description,
-            meetingType: meeting.meetingType,
-            participants: meeting.participants.map(p => p.id), // 设置参会人员ID数组
-            locations: meeting.locations || [], // 设置地址数组
-            timeRange: [meetingStart, meetingEnd], // 会议开始和结束时间
-            recurrenceType: recurrenceConfig.type,
-            endType: recurrenceConfig.endType,
-        };
-
-        // 设置重复相关字段
-        if (recurrenceConfig.type === 'weekly' && recurrenceConfig.weekdays) {
-            formValues.weekdays = recurrenceConfig.weekdays;
-        }
-
-        if (recurrenceConfig.type === 'monthly' && recurrenceConfig.monthlyType) {
-            formValues.monthlyType = recurrenceConfig.monthlyType;
-        }
-
-        if (recurrenceConfig.endType === 'date' && recurrenceConfig.endDate) {
-            formValues.endDate = dayjs(recurrenceConfig.endDate, 'YYYY-MM-DD');
-        }
-
-        form.setFieldsValue(formValues);
-
-        // 设置重复会议相关状态
-        setRecurrenceType(recurrenceConfig.type);
-        setEndType(recurrenceConfig.endType);
-        setMeetingDuration(meeting.duration); // 设置持续时间显示
-    };
-
-    const handleDeleteMeeting = (meeting: Meeting) => {
-        Modal.confirm({
-            title: '确认删除',
-            content: meeting.isRecurring
-                ? `"${meeting.title}"是一个重复会议，是否删除所有重复会议？`
-                : `确定要删除会议"${meeting.title}"吗？`,
-            okText: '确认',
-            cancelText: '取消',
-            onOk: () => {
-                setMeetings(meetings.filter(m => m.id !== meeting.id));
-                message.success('会议已删除');
-            },
+    const handleCopyMeetingId = (meetingId: string) => {
+        navigator.clipboard.writeText(meetingId).then(() => {
+            message.success('房间ID已复制到剪贴板');
+        }).catch(() => {
+            message.error('复制失败，请重试');
         });
-    };
-
-    const handleQuickStart = () => {
-        const meetingId = Math.random().toString(36).substring(7);
-        message.success(`快速会议已创建，会议ID: ${meetingId}`);
-    };
-
-    const handleOpenCreateModal = () => {
-        setEditingMeeting(null);
-        form.resetFields();
-        setRecurrenceType('none');
-        setEndType('date');
-        setMeetingDuration(0);
-        setCreateModalVisible(true);
-    };
-
-    const handleCreateMeeting = async (values: any) => {
-        setLoading(true);
-        try {
-            console.log(editingMeeting ? '编辑会议:' : '创建会议:', values);
-
-            // 构建重复模式描述和配置
-            let recurrenceDesc = '';
-            let recurrenceConfig: RecurrenceConfig | undefined;
-
-            if (recurrenceType !== 'none') {
-                const typeMap: { [key: string]: string } = {
-                    'daily': '每天',
-                    'weekly': '每周',
-                    'monthly': '每月'
-                };
-                recurrenceDesc = typeMap[recurrenceType];
-
-                if (recurrenceType === 'weekly' && values.weekdays?.length > 0) {
-                    const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-                    const days = values.weekdays.map((d: number) => weekdayNames[d]).join('、');
-                    recurrenceDesc = `每周${days}`;
-                }
-
-                if (values.endType === 'date' && values.endDate) {
-                    recurrenceDesc += `重复，直到 ${values.endDate.format('YYYY-MM-DD')}`;
-                } else {
-                    recurrenceDesc += '重复';
-                }
-
-                // 构建重复配置
-                recurrenceConfig = {
-                    type: recurrenceType as 'daily' | 'weekly' | 'monthly',
-                    endType: values.endType || 'date',
-                    weekdays: values.weekdays,
-                    monthlyType: values.monthlyType,
-                    endDate: values.endDate?.format('YYYY-MM-DD')
-                };
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // 获取参会人员信息
-            const participantOptions = [
-                { id: 'user1', name: '张三' },
-                { id: 'user2', name: '李四' },
-                { id: 'user3', name: '王五' },
-                { id: 'user4', name: '赵六' },
-                { id: 'user5', name: '钱七' },
-                { id: 'user6', name: '孙八' },
-                { id: 'user7', name: '周九' },
-                { id: 'user8', name: '吴十' },
-                { id: 'user9', name: '郑十一' },
-                { id: 'user10', name: '冯十二' },
-                { id: 'user11', name: '陈十三' },
-                { id: 'user12', name: '楚十四' },
-            ];
-
-            const selectedParticipants = participantOptions.filter(p =>
-                values.participants?.includes(p.id)
-            );
-
-            // 从时间范围中提取开始时间、结束时间和持续时间
-            const [startTime, endTime] = values.timeRange;
-            const meetingDate = startTime.format('YYYY-MM-DD');
-            const meetingTime = startTime.format('HH:mm');
-            const duration = endTime.diff(startTime, 'minute'); // 计算分钟数
-
-            if (editingMeeting) {
-                // 编辑现有会议
-                const updatedMeeting: Meeting = {
-                    ...editingMeeting,
-                    title: values.title,
-                    description: values.description,
-                    meetingType: values.meetingType,
-                    date: meetingDate,
-                    time: meetingTime,
-                    duration: duration,
-                    participants: selectedParticipants,
-                    locations: values.locations || [],
-                    isRecurring: recurrenceType !== 'none',
-                    recurrencePattern: recurrenceType !== 'none' ? recurrenceDesc : undefined,
-                    recurrenceConfig: recurrenceConfig,
-                };
-
-                setMeetings(meetings.map(m => m.id === editingMeeting.id ? updatedMeeting : m));
-                message.success('会议更新成功！');
-            } else {
-                // 创建新会议
-                const newMeeting: Meeting = {
-                    id: Date.now().toString(),
-                    title: values.title,
-                    description: values.description,
-                    meetingType: values.meetingType,
-                    organizer: '当前用户', // 这里应该从用户信息中获取
-                    date: meetingDate,
-                    time: meetingTime,
-                    duration: duration,
-                    participants: selectedParticipants,
-                    locations: values.locations || [],
-                    meetingId: `${Math.random().toString(36).substr(2, 3)}-${Math.random().toString(36).substr(2, 3)}-${Math.random().toString(36).substr(2, 3)}`,
-                    hasPassword: false,
-                    isRecurring: recurrenceType !== 'none',
-                    recurrencePattern: recurrenceType !== 'none' ? recurrenceDesc : undefined,
-                    recurrenceConfig: recurrenceConfig,
-                };
-
-                setMeetings([...meetings, newMeeting]);
-                message.success(
-                    recurrenceType !== 'none'
-                        ? `重复会议创建成功！${recurrenceDesc}`
-                        : '会议创建成功！'
-                );
-            }
-
-            form.resetFields();
-            setCreateModalVisible(false);
-            setEditingMeeting(null);
-            // 重置重复会议状态
-            setRecurrenceType('none');
-            setEndType('date');
-        } catch (error) {
-            message.error(editingMeeting ? '更新会议失败，请重试' : '创建会议失败，请重试');
-        } finally {
-            setLoading(false);
-        }
     };
 
     const getStatusTag = (status: MeetingStatus) => {
@@ -911,22 +755,6 @@ function MyMeetings(): ReactElement {
                             刷新状态
                         </Button>
                     </Tooltip>
-                    <Button
-                        type="default"
-                        size="large"
-                        icon={<VideoCameraOutlined />}
-                        onClick={handleQuickStart}
-                    >
-                        快速会议
-                    </Button>
-                    <Button
-                        type="primary"
-                        size="large"
-                        icon={<PlusOutlined />}
-                        onClick={handleOpenCreateModal}
-                    >
-                        预约会议
-                    </Button>
                 </div>
             </div>
 
@@ -1006,6 +834,18 @@ function MyMeetings(): ReactElement {
                                             )}
                                         </div>
 
+                                        {/* 房间ID卡片 */}
+                                        <div css={styles.meetingIdCard}>
+                                            <div className="meeting-id-left">
+                                                <ClockCircleOutlined />
+                                                <span>房间ID</span>
+                                            </div>
+                                            <div className="meeting-id-right">
+                                                <span className="meeting-id-text">{meeting.meetingId}</span>
+                                                <CopyOutlined onClick={() => handleCopyMeetingId(meeting.meetingId)} />
+                                            </div>
+                                        </div>
+
                                         <div css={styles.meetingActions}>
                                             <Button
                                                 type="primary"
@@ -1017,21 +857,6 @@ function MyMeetings(): ReactElement {
                                             >
                                                 立即加入
                                             </Button>
-                                            <Space style={{ marginTop: 8 }}>
-                                                <Button
-                                                    icon={<EditOutlined />}
-                                                    onClick={() => handleEditMeeting(meeting)}
-                                                >
-                                                    编辑
-                                                </Button>
-                                                <Button
-                                                    danger
-                                                    icon={<DeleteOutlined />}
-                                                    onClick={() => handleDeleteMeeting(meeting)}
-                                                >
-                                                    删除
-                                                </Button>
-                                            </Space>
                                         </div>
                                     </Card>
                                 ))}
@@ -1117,6 +942,18 @@ function MyMeetings(): ReactElement {
                                             )}
                                         </div>
 
+                                        {/* 房间ID卡片 */}
+                                        <div css={styles.meetingIdCard}>
+                                            <div className="meeting-id-left">
+                                                <ClockCircleOutlined />
+                                                <span>房间ID</span>
+                                            </div>
+                                            <div className="meeting-id-right">
+                                                <span className="meeting-id-text">{meeting.meetingId}</span>
+                                                <CopyOutlined onClick={() => handleCopyMeetingId(meeting.meetingId)} />
+                                            </div>
+                                        </div>
+
                                         <div css={styles.meetingActions}>
                                             <Button
                                                 type="primary"
@@ -1127,21 +964,6 @@ function MyMeetings(): ReactElement {
                                             >
                                                 加入会议
                                             </Button>
-                                            <Space style={{ marginTop: 8 }}>
-                                                <Button
-                                                    icon={<EditOutlined />}
-                                                    onClick={() => handleEditMeeting(meeting)}
-                                                >
-                                                    编辑
-                                                </Button>
-                                                <Button
-                                                    danger
-                                                    icon={<DeleteOutlined />}
-                                                    onClick={() => handleDeleteMeeting(meeting)}
-                                                >
-                                                    删除
-                                                </Button>
-                                            </Space>
                                         </div>
                                     </Card>
                                 ))}
@@ -1216,6 +1038,18 @@ function MyMeetings(): ReactElement {
                                             )}
                                         </div>
 
+                                        {/* 房间ID卡片 */}
+                                        <div css={styles.meetingIdCard}>
+                                            <div className="meeting-id-left">
+                                                <ClockCircleOutlined />
+                                                <span>房间ID</span>
+                                            </div>
+                                            <div className="meeting-id-right">
+                                                <span className="meeting-id-text">{meeting.meetingId}</span>
+                                                <CopyOutlined onClick={() => handleCopyMeetingId(meeting.meetingId)} />
+                                            </div>
+                                        </div>
+
                                         <div css={styles.meetingActions}>
                                             <Space style={{ width: '100%' }} direction="vertical">
                                                 <Button
@@ -1226,21 +1060,6 @@ function MyMeetings(): ReactElement {
                                                 >
                                                     加入会议
                                                 </Button>
-                                                <Space>
-                                                    <Button
-                                                        icon={<EditOutlined />}
-                                                        onClick={() => handleEditMeeting(meeting)}
-                                                    >
-                                                        编辑
-                                                    </Button>
-                                                    <Button
-                                                        danger
-                                                        icon={<DeleteOutlined />}
-                                                        onClick={() => handleDeleteMeeting(meeting)}
-                                                    >
-                                                        删除
-                                                    </Button>
-                                                </Space>
                                             </Space>
                                         </div>
                                     </Card>
@@ -1331,16 +1150,16 @@ function MyMeetings(): ReactElement {
                                             )}
                                         </div>
 
-                                        <div css={styles.meetingActions}>
-                                            <Space>
-                                                <Button
-                                                    danger
-                                                    icon={<DeleteOutlined />}
-                                                    onClick={() => handleDeleteMeeting(meeting)}
-                                                >
-                                                    删除
-                                                </Button>
-                                            </Space>
+                                        {/* 房间ID卡片 */}
+                                        <div css={styles.meetingIdCard}>
+                                            <div className="meeting-id-left">
+                                                <ClockCircleOutlined />
+                                                <span>房间ID</span>
+                                            </div>
+                                            <div className="meeting-id-right">
+                                                <span className="meeting-id-text">{meeting.meetingId}</span>
+                                                <CopyOutlined onClick={() => handleCopyMeetingId(meeting.meetingId)} />
+                                            </div>
                                         </div>
                                     </Card>
                                 ))}
@@ -1349,273 +1168,6 @@ function MyMeetings(): ReactElement {
                     </Collapse>
                 </div>
             )}
-
-            {/* 创建会议弹窗 */}
-            <Modal
-                title={editingMeeting ? "编辑会议" : "预约会议"}
-                open={createModalVisible}
-                onCancel={() => {
-                    setCreateModalVisible(false);
-                    setEditingMeeting(null);
-                    form.resetFields();
-                    setRecurrenceType('none');
-                    setEndType('date');
-                    setRecurrenceType('none');
-                }}
-                footer={null}
-                width={700}
-                destroyOnClose
-                centered
-                bodyStyle={{
-                    maxHeight: 'calc(100vh - 300px)',
-                    overflowY: 'auto',
-                    overflowX: 'hidden',
-                    paddingRight: '32px'
-                }}
-            >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleCreateMeeting}
-                    initialValues={{
-                        recurrenceType: 'none',
-                        endType: 'date',
-                    }}
-                >
-                    <Form.Item
-                        label="会议主题"
-                        name="title"
-                        rules={[{ required: true, message: '请输入会议主题' }]}
-                    >
-                        <Input
-                            placeholder="输入会议主题"
-                            prefix={<TeamOutlined />}
-                            size="large"
-                        />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="会议类型"
-                        name="meetingType"
-                        rules={[{ required: true, message: '请选择会议类型' }]}
-                    >
-                        <Select
-                            placeholder="选择会议类型"
-                            size="large"
-                        >
-                            <Option value="productivity">产能会议</Option>
-                            <Option value="quality">质量分析会议</Option>
-                            <Option value="efficiency">效能会议</Option>
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        label="参会人员"
-                        name="participants"
-                        rules={[{ required: true, message: '请选择参会人员' }]}
-                    >
-                        <Select
-                            mode="multiple"
-                            placeholder="选择参会人员"
-                            size="large"
-                            maxTagCount="responsive"
-                        >
-                            <Option value="user1">张三</Option>
-                            <Option value="user2">李四</Option>
-                            <Option value="user3">王五</Option>
-                            <Option value="user4">赵六</Option>
-                            <Option value="user5">钱七</Option>
-                            <Option value="user6">孙八</Option>
-                            <Option value="user7">周九</Option>
-                            <Option value="user8">吴十</Option>
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        label="会议地址"
-                        name="locations"
-                        rules={[{ required: true, message: '请选择会议地址' }]}
-                    >
-                        <TreeSelect
-                            treeData={locationTreeData}
-                            placeholder="请选择区域、工厂和生产线（可多选）"
-                            size="large"
-                            multiple
-                            treeCheckable
-                            showCheckedStrategy={TreeSelect.SHOW_CHILD}
-                            showSearch
-                            treeNodeFilterProp="title"
-                            filterTreeNode={(input, treeNode) => {
-                                const title = treeNode.title as string;
-                                return title.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-                            }}
-                            maxTagCount="responsive"
-                            style={{ width: '100%' }}
-                            dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-                            treeDefaultExpandAll={false}
-                        />
-                    </Form.Item>
-
-                    <Form.Item label="会议时间">
-                        <Space style={{ width: '100%', display: 'flex', alignItems: 'flex-start' }}>
-                            <Form.Item
-                                name="timeRange"
-                                rules={[{ required: true, message: '请选择会议开始和结束时间' }]}
-                                noStyle
-                            >
-                                <RangePicker
-                                    showTime={{ format: 'HH:mm' }}
-                                    format="YYYY-MM-DD HH:mm"
-                                    placeholder={['开始时间', '结束时间']}
-                                    size="large"
-                                    onChange={(dates) => {
-                                        if (dates && dates[0] && dates[1]) {
-                                            const duration = dates[1].diff(dates[0], 'minute');
-                                            setMeetingDuration(duration);
-                                        } else {
-                                            setMeetingDuration(0);
-                                        }
-                                    }}
-                                />
-                            </Form.Item>
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                height: '40px',
-                                padding: '0 12px',
-                                background: '#f5f5f5',
-                                borderRadius: '6px',
-                                minWidth: '120px',
-                                whiteSpace: 'nowrap'
-                            }}>
-                                <ClockCircleOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
-                                <span style={{ fontWeight: 500, color: '#333' }}>
-                                    {formatDuration(meetingDuration)}
-                                </span>
-                            </div>
-                        </Space>
-                    </Form.Item>
-
-                    <Form.Item
-                        label="会议描述"
-                        name="description"
-                    >
-                        <TextArea
-                            placeholder="添加会议描述（可选）"
-                            rows={3}
-                        />
-                    </Form.Item>
-
-                    {/* 重复设置 */}
-                    <div css={styles.recurrenceSection}>
-                        <div css={styles.recurrenceTitle}>
-                            <SyncOutlined />
-                            重复设置
-                        </div>
-
-                        <Form.Item
-                            label="重复频率"
-                            name="recurrenceType"
-                        >
-                            <Select
-                                size="large"
-                                onChange={(value) => setRecurrenceType(value)}
-                            >
-                                <Option value="none">不重复</Option>
-                                <Option value="daily">每天</Option>
-                                <Option value="weekly">每周</Option>
-                                <Option value="monthly">每月</Option>
-                            </Select>
-                        </Form.Item>
-
-                        {recurrenceType === 'weekly' && (
-                            <Form.Item
-                                label="重复日期"
-                                name="weekdays"
-                                rules={[{ required: true, message: '请选择至少一天' }]}
-                            >
-                                <Checkbox.Group>
-                                    <div css={styles.weekdaysSelector}>
-                                        <Checkbox value={1}>周一</Checkbox>
-                                        <Checkbox value={2}>周二</Checkbox>
-                                        <Checkbox value={3}>周三</Checkbox>
-                                        <Checkbox value={4}>周四</Checkbox>
-                                        <Checkbox value={5}>周五</Checkbox>
-                                        <Checkbox value={6}>周六</Checkbox>
-                                        <Checkbox value={0}>周日</Checkbox>
-                                    </div>
-                                </Checkbox.Group>
-                            </Form.Item>
-                        )}
-
-                        {recurrenceType === 'monthly' && (
-                            <Form.Item
-                                label="每月重复方式"
-                                name="monthlyType"
-                                initialValue="date"
-                            >
-                                <Radio.Group>
-                                    <Space direction="vertical">
-                                        <Radio value="date">每月同一日期（如每月 15 号）</Radio>
-                                        <Radio value="weekday">每月同一周几（如每月第二个周一）</Radio>
-                                    </Space>
-                                </Radio.Group>
-                            </Form.Item>
-                        )}
-
-                        {recurrenceType !== 'none' && (
-                            <div css={styles.recurrenceEndSection}>
-                                <Form.Item
-                                    label="结束条件"
-                                    name="endType"
-                                >
-                                    <Radio.Group onChange={(e) => setEndType(e.target.value)}>
-                                        <Space direction="vertical">
-                                            <Radio value="date">结束日期</Radio>
-                                            <Radio value="never">永不结束</Radio>
-                                        </Space>
-                                    </Radio.Group>
-                                </Form.Item>
-
-                                {endType === 'date' && (
-                                    <Form.Item
-                                        name="endDate"
-                                        rules={[{ required: true, message: '请选择结束日期' }]}
-                                    >
-                                        <DatePicker
-                                            style={{ width: '100%' }}
-                                            placeholder="选择结束日期"
-                                        />
-                                    </Form.Item>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                            <Button onClick={() => {
-                                setCreateModalVisible(false);
-                                form.resetFields();
-                                setRecurrenceType('none');
-                            }}>
-                                取消
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={loading}
-                                icon={recurrenceType !== 'none' ? <SyncOutlined /> : <ClockCircleOutlined />}
-                            >
-                                {editingMeeting
-                                    ? '更新会议'
-                                    : (recurrenceType !== 'none' ? '创建重复会议' : '创建会议')
-                                }
-                            </Button>
-                        </Space>
-                    </Form.Item>
-                </Form>
-            </Modal>
         </div>
     );
 }
